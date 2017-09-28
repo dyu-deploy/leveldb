@@ -171,3 +171,20 @@ in util/env_posix.cc
 
 * **include/table.h, include/table_builder.h**: Lower-level modules that most
 clients probably won't use directly
+
+### GN build
+1. `git clone --depth 1 --single-branch -b ns https://github.com/dyu/gn-build`
+
+2  `git clone --depth 1 --single-branch -b master https://github.com/dyu/gn-deps`
+
+3. `echo 'buildconfig = "//gn-build/config/BUILDCONFIG.gn"' > .gn`
+   On windows, exclude the single quote.
+
+4. On linux:
+   ```sh
+   gn gen gn-out --args='gcc_cc="gcc" gcc_cxx="g++" symbol_level=0 is_debug=false is_clang=false is_official_build=true'
+   ```
+   On windows:
+   ```sh
+   gn gen gn-out --args="visual_studio_path=\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\" visual_studio_version=\"2015\" symbol_level=0 is_debug=false is_clang=false is_official_build=true"
+

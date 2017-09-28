@@ -1,3 +1,7 @@
+/gn-build
+/gn-deps
+/gn-out
+/.gn
 build_config.mk
 *.a
 *.o
