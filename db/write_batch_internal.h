@@ -40,6 +40,9 @@ class WriteBatchInternal {
   static void SetContents(WriteBatch* batch, const Slice& contents);
 
   static Status InsertInto(const WriteBatch* batch, MemTable* memtable);
+  
+  static Status InsertWithHandlerInto(const WriteBatch* batch, MemTable* memtable,
+      std::function<void(const Slice&, const Slice&)> handler);
 
   static void Append(WriteBatch* dst, const WriteBatch* src);
 };

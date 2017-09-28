@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <functional>
 #include "leveldb/iterator.h"
 #include "leveldb/options.h"
 
@@ -72,6 +73,11 @@ class DB {
   // Returns OK on success, non-OK on failure.
   // Note: consider setting options.sync = true.
   virtual Status Write(const WriteOptions& options, WriteBatch* updates) = 0;
+  
+  // Same as above (the data that the batch holds is basically the slice passed here)
+  // plus an optional callback function for the entries being inserted/updated.
+  virtual Status WriteUpdates(const WriteOptions& options, WriteBatch* updates,
+      std::function<void(const Slice&, const Slice&)> handler) = 0;
 
   // If the database contains an entry for "key" store the
   // corresponding value in *value and return OK.
