@@ -54,6 +54,7 @@ class WriteBatch {
  private:
   friend class WriteBatchInternal;
 
+ public:
   std::string rep_;  // See comment in write_batch.cc for the format of rep_
 
   // Intentionally copyable
