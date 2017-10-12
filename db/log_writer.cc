@@ -127,7 +127,8 @@ Status AppendOnlyWriter::AddRecord(const Slice& slice) {
   Status s;
   bool begin = true;
   do {
-    const int leftover = kBlockSize - block_offset_;
+    int block_offset = block_offset_ % kBlockSize;
+    const int leftover = kBlockSize - block_offset;
     assert(leftover >= 0);
     if (leftover == 0) {
       // noop
@@ -139,14 +140,15 @@ Status AppendOnlyWriter::AddRecord(const Slice& slice) {
       if (!s.ok())
         return s;
       
-      block_offset_ = 0;
+      block_offset = 0;
+      block_offset_ += leftover;
       dest_length_ += leftover;
     }
 
     // Invariant: we never leave < kHeaderSize bytes in a block.
-    assert(kBlockSize - block_offset_ - kHeaderSize >= 0);
+    assert(kBlockSize - block_offset - kHeaderSize >= 0);
 
-    const size_t avail = kBlockSize - block_offset_ - kHeaderSize;
+    const size_t avail = kBlockSize - block_offset - kHeaderSize;
     const size_t fragment_length = (left < avail) ? left : avail;
 
     RecordType type;
@@ -171,7 +173,7 @@ Status AppendOnlyWriter::AddRecord(const Slice& slice) {
 
 Status AppendOnlyWriter::EmitPhysicalRecord(RecordType t, const char* ptr, size_t n) {
   assert(n <= 0xffff);  // Must fit in two bytes
-  assert(block_offset_ + kHeaderSize + n <= kBlockSize);
+  assert((block_offset_ % kBlockSize) + kHeaderSize + n <= kBlockSize);
 
   // Format the header
   char buf[kHeaderSize];
