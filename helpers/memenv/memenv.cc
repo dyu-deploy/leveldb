@@ -175,6 +175,16 @@ class SequentialFileImpl : public SequentialFile {
     pos_ += n;
     return Status::OK();
   }
+  
+  #ifndef WIN32
+  virtual Status Seek(uint64_t n) {
+    if (n > file_->Size()) {
+      return Status::IOError("pos_ > file_->Size()");
+    }
+    pos_ = n;
+    return Status::OK();
+  }
+  #endif
 
  private:
   FileState* file_;

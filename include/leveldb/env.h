@@ -190,6 +190,11 @@ class SequentialFile {
   //
   // REQUIRES: External synchronization
   virtual Status Skip(uint64_t n) = 0;
+  
+  #ifndef WIN32
+  // Similar to Skip but is absolute (Skip is relative to current position).
+  virtual Status Seek(uint64_t n) = 0;
+  #endif
 
  private:
   // No copying allowed

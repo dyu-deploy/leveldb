@@ -23,6 +23,9 @@ Reader::Reader(SequentialFile* file, Reporter* reporter, bool checksum,
       backing_store_(new char[kBlockSize]),
       buffer_(),
       eof_(false),
+      #ifndef WIN32
+      reset_(false),
+      #endif
       last_record_offset_(0),
       end_of_buffer_offset_(0),
       initial_offset_(initial_offset),
@@ -32,6 +35,22 @@ Reader::Reader(SequentialFile* file, Reporter* reporter, bool checksum,
 Reader::~Reader() {
   delete[] backing_store_;
 }
+
+#ifndef WIN32
+void Reader::Reset(uint64_t offset)
+{
+    if (offset == initial_offset_ && buffer_.size_ == 0 && last_record_offset_ == 0 && end_of_buffer_offset_ == 0)
+        return;
+    
+    reset_ = true;
+    buffer_.clear();
+    
+    eof_ = false;
+    last_record_offset_ = 0;
+    end_of_buffer_offset_ = 0;
+    initial_offset_ = offset;
+}
+#endif
 
 bool Reader::SkipToInitialBlock() {
   size_t offset_in_block = initial_offset_ % kBlockSize;
@@ -46,7 +65,18 @@ bool Reader::SkipToInitialBlock() {
   end_of_buffer_offset_ = block_start_location;
 
   // Skip to start of first block that can contain the initial record
+#ifndef WIN32
+  if (reset_) {
+    reset_ = false;
+    Status skip_status = file_->Seek(block_start_location);
+    if (!skip_status.ok()) {
+      ReportDrop(block_start_location, skip_status);
+      return false;
+    }
+  } else if (block_start_location > 0) {
+#else
   if (block_start_location > 0) {
+#endif
     Status skip_status = file_->Skip(block_start_location);
     if (!skip_status.ok()) {
       ReportDrop(block_start_location, skip_status);
@@ -58,7 +88,11 @@ bool Reader::SkipToInitialBlock() {
 }
 
 bool Reader::ReadRecord(Slice* record, std::string* scratch) {
+#ifndef WIN32
+  if (reset_ || last_record_offset_ < initial_offset_) {
+#else
   if (last_record_offset_ < initial_offset_) {
+#endif
     if (!SkipToInitialBlock()) {
       return false;
     }

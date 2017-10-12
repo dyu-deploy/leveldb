@@ -48,6 +48,36 @@ class Writer {
   void operator=(const Writer&);
 };
 
+#ifndef WIN32
+class AppendOnlyWriter {
+ public:
+  // Create a writer that will append data to "*dest".
+  // "*dest" must have initial length "dest_length".
+  // "*dest" must remain live while this AppendOnlyWriter is in use.
+  AppendOnlyWriter(WritableFile* dest, uint64_t dest_length);
+
+  ~AppendOnlyWriter();
+
+  Status AddRecord(const Slice& slice);
+
+  WritableFile* dest_;
+  uint64_t dest_length_;
+  int block_offset_;       // Current offset in block
+
+ private:
+  // crc32c values for all supported record types.  These are
+  // pre-computed to reduce the overhead of computing the crc of the
+  // record type stored in the header.
+  uint32_t type_crc_[kMaxRecordType + 1];
+
+  Status EmitPhysicalRecord(RecordType type, const char* ptr, size_t length);
+
+  // No copying allowed
+  AppendOnlyWriter(const AppendOnlyWriter&);
+  void operator=(const AppendOnlyWriter&);
+};
+#endif
+
 }  // namespace log
 }  // namespace leveldb
 

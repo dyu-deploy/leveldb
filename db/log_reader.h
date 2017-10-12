@@ -56,6 +56,10 @@ class Reader {
   //
   // Undefined before the first call to ReadRecord.
   uint64_t LastRecordOffset();
+  
+  #ifndef WIN32
+  void Reset(uint64_t offset);
+  #endif
 
  private:
   SequentialFile* const file_;
@@ -64,6 +68,9 @@ class Reader {
   char* const backing_store_;
   Slice buffer_;
   bool eof_;   // Last Read() indicated EOF by returning < kBlockSize
+  #ifndef WIN32
+  bool reset_;
+  #endif
 
   // Offset of the last record returned by ReadRecord.
   uint64_t last_record_offset_;
@@ -71,7 +78,11 @@ class Reader {
   uint64_t end_of_buffer_offset_;
 
   // Offset at which to start looking for the first record to return
+  #ifndef WIN32
+  uint64_t initial_offset_;
+  #else
   uint64_t const initial_offset_;
+  #endif
 
   // True if we are resynchronizing after a seek (initial_offset_ > 0). In
   // particular, a run of kMiddleType and kLastType records can be silently
